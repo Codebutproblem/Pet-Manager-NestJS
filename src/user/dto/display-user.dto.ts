@@ -1,8 +1,7 @@
 import { Expose, Transform } from "class-transformer";
+import { DisplayBaseDto } from "src/common/dtos/display_base.dto";
 
-export class DisplayUserDto {
-    @Expose()
-    id: string;
+export class DisplayUserDto extends DisplayBaseDto {
 
     @Expose()
     username: string;
@@ -19,11 +18,5 @@ export class DisplayUserDto {
     fullName: string;
 
     @Expose()
-    createdAt: Date;
-
-    @Expose()
-    updatedAt: Date;
-
-    @Expose()
-    deletedAt: Date;
+    role: string
 }

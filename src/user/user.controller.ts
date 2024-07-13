@@ -4,30 +4,31 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DisplayUserDto } from './dto/display-user.dto';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
+import { Roles } from 'src/role/roles.decorator';
+import { Role } from 'src/role/role.enum';
+import { ParseRolePipe } from './pipes/parserole.pipe';
+import { ProfileUserDto } from './dto/profile-user.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) { }
-  
+
+
   @UseGuards(AuthGuard)
   @Get('profile')
-  getProfile(@Request() request : Request){
-    return this.userService.getProfile(request["user"]);
+  async getProfile(@Request() request: Request): Promise<ProfileUserDto> {
+    return await this.userService.getProfile(request['user'].id);
   }
 
-  
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<{ message: string, user: DisplayUserDto }> {
-    const displayUser = await this.userService.create(createUserDto);
-    return {
-      message: 'User created successfully',
-      user: displayUser
-    }
+  async create(@Body() createUserDto: CreateUserDto): Promise<DisplayUserDto> {
+    return await this.userService.create(createUserDto);
   }
 
+  @Roles(Role.Admin)
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  async findAll(): Promise<DisplayUserDto[]> {
+    return await this.userService.findAll();
   }
 
   @Get(':id')
@@ -36,15 +37,31 @@ export class UserController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<{ message: string }> {
+    await this.userService.update(id, updateUserDto)
+    return {
+      message: 'User updated successfully'
+    };
   }
 
+  @Roles(Role.Admin)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
+    await this.userService.remove(id);
+    return {
+      message: 'User deleted successfully'
+    }
   }
 
-  
+
+  @Roles(Role.Admin)
+  @Patch('/role/:id')
+  async updateRole(@Param('id') id: string, @Body('role', ParseRolePipe) role: Role): Promise<{ message: string }> {
+    await this.userService.updateRole(id, role);
+    return {
+      message: 'Role updated successfully'
+    }
+  }
+
 
 }

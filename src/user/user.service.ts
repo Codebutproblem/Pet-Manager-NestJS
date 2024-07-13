@@ -1,14 +1,15 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
-import { plainToInstance } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
-import { DisplayUserDto } from './dto/display-user.dto';
+import { plainToInstance } from 'class-transformer';
 import SystemConfig from 'src/config/sytem';
-import ExceptionMessage from 'src/config/exception.message';
+import { Role } from 'src/role/role.enum';
+import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
+import { DisplayUserDto } from './dto/display-user.dto';
+import { ProfileUserDto } from './dto/profile-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
@@ -16,38 +17,36 @@ export class UserService {
   constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) { }
 
   async create(createUserDto: CreateUserDto): Promise<DisplayUserDto | undefined> {
-    try {
-      const hashedPassword = await bcrypt.hash(createUserDto.password, SystemConfig.SALT_OR_ROUNDS);
-      const savedUser = await this.userRepository.save({ ...createUserDto, hashedPassword });
-      const diplayUser = plainToInstance(DisplayUserDto, savedUser, { excludeExtraneousValues: true });
-      return diplayUser;
-    } catch (error) {
-      throw new HttpException(ExceptionMessage.SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    const hashedPassword = await bcrypt.hash(createUserDto.password, SystemConfig.SALT_OR_ROUNDS);
+    const savedUser = await this.userRepository.save({ ...createUserDto, hashedPassword });
+    const diplayUser = plainToInstance(DisplayUserDto, savedUser, { excludeExtraneousValues: true });
+    return diplayUser;
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll(): Promise<DisplayUserDto[] | undefined[]> {
+    const users = await this.userRepository.find();
+    return users.map(user => plainToInstance(DisplayUserDto, user, { excludeExtraneousValues: true }));
   }
 
   async findOne(id: string): Promise<DisplayUserDto | undefined> {
-    try {
-      const user = await this.userRepository.findOne({ where: { id } });
-      return plainToInstance(DisplayUserDto, user, { excludeExtraneousValues: true });
-    } catch (error) {
-      throw new HttpException(ExceptionMessage.SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    const user = await this.userRepository.findOne({ where: { id } });
+    return plainToInstance(DisplayUserDto, user, { excludeExtraneousValues: true });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<void> {
+    await this.userRepository.update(id, updateUserDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string): Promise<void> {
+    await this.userRepository.softDelete(id);
   }
 
-  getProfile(user : any){
-    return plainToInstance(DisplayUserDto, user, { excludeExtraneousValues: true});
+  async updateRole(id: string, role: Role): Promise<void> {
+    await this.userRepository.update(id, { role });
+  }
+
+  async getProfile(id: string): Promise<ProfileUserDto | undefined> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    return plainToInstance(ProfileUserDto, user, { excludeExtraneousValues: true });
   }
 }

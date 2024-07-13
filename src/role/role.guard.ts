@@ -26,7 +26,7 @@ export class RolesGuard implements CanActivate {
     const access_token = this.extractTokenFromHeader(request);
     try {
       const payload = await this.jwtService.verify(access_token, { secret: this.configService.get<string>('JWT_SECRET') });
-      const user = payload;
+      const { iat, exp, ...user } = payload;
       return requiredRoles.some((role) => user.role === role);
     } catch (error) {
       throw new ForbiddenException();

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { InternalServerErrorException, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,7 +8,7 @@ import { join, parse } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RoleModule } from './role/role.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './role/role.guard';
 
 @Module({
@@ -42,6 +42,10 @@ import { RolesGuard } from './role/role.guard';
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    {
+      provide: APP_FILTER,
+      useClass: InternalServerErrorException,
+    }
   ],
 })
 export class AppModule { }

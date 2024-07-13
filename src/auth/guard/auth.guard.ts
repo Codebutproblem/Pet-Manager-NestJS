@@ -20,7 +20,8 @@ export class AuthGuard implements CanActivate {
 		}
 		try {
 			const payload = await this.jwtService.verify(access_token, { secret: this.configService.get<string>('JWT_SECRET') });
-			request['user'] = payload;
+			const { iat, exp, ...user } = payload;
+			request['user'] = user;
 		} catch (error) {
 			throw new ForbiddenException();
 		}
